@@ -51,7 +51,12 @@ const std::unordered_map<std::string, std::unordered_set<std::string>>
         {{"position"}, {"fen", "startpos", "moves"}},
         {{"go"},
          {"infinite", "wtime", "btime", "winc", "binc", "movestogo", "depth",
+<<<<<<< HEAD
           "nodes", "movetime", "searchmoves", "ponder"}},
+=======
+          "nodes", "movetime", "searchmoves"}},
+        {{"dumpnode"}, {"moves"}},
+>>>>>>> fcd4fd6... Implement dumpnode (attempt 1, untested)
         {{"start"}, {}},
         {{"stop"}, {}},
         {{"ponderhit"}, {}},
@@ -159,6 +164,13 @@ bool UciLoop::DispatchCommand(
     std::vector<std::string> moves =
         StrSplitAtWhitespace(GetOrEmpty(params, "moves"));
     CmdPosition(GetOrEmpty(params, "fen"), moves);
+  } else if (command == "dumpnode") {
+    if (not ContainsKey(params, "moves")) {
+      throw Exception("Dump node requires moves.");
+    }
+    std::vector<std::string> moves =
+            StrSplitAtWhitespace(GetOrEmpty(params, "moves"));
+    CmdDumpNode(moves);
   } else if (command == "go") {
     GoParams go_params;
     if (ContainsKey(params, "infinite")) {

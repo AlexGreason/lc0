@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <iostream>
 
 #include "engine.h"
 #include "mcts/search.h"
@@ -294,6 +295,62 @@ void EngineController::SetupPosition(
   UpdateFromUciOptions();
 }
 
+void EngineController::DumpNode(const std::vector<std::string>& moves_str) {
+  SharedLock lock(busy_mutex_);
+  search_.reset();
+
+  if (!tree_) tree_ = std::make_unique<NodeTree>();
+
+  std::vector<Move> moves;
+  for (const auto& move : moves_str) moves.emplace_back(move);
+//  tree_->ResetToPosition(fen, moves);
+
+  Node* here = tree_->GetGameBeginNode();
+  bool black_to_move = false;
+  for (const Move& move : moves) {
+    // Find the corresponding move in the tree.
+    bool found_child = false;
+    for (Node* child : here->ChildNodes()) {
+      Edge* childedge = here->GetEdgeToNode(child);
+      Move child_move = childedge->GetMove(black_to_move);
+      // Here we compare the .as_string()s rather than the underlying moves to make it so we can probe castling with e.g. e1g1 rather than e1g8.
+      // I do this so that simply recursively examining the children printed out and sending them back into dumpnode does the right thing.
+      if (child_move.as_string() == move.as_string()) {
+        here = child;
+        found_child = true;
+        break;
+      }
+    }
+    if (not found_child) {
+      std::cout << "info string Error: Couldn't find child with move: " << move.as_string() << std::endl;
+      here = nullptr;
+      break;
+    }
+    // Keep track of whose turn it is.
+    black_to_move = not black_to_move;
+  }
+
+  // We now dump info about the given node.
+  if (here != nullptr) {
+    for (Node* child : here->ChildNodes()) {
+      if (child->GetN() == 0)
+        continue;
+      Edge* childedge = here->GetEdgeToNode(child);
+      Move child_move = childedge->GetMove(black_to_move);
+      std::cout << "info string" \
+    << " move=" << child_move.as_string() \
+    << " n=" << child->GetN() \
+    << " v=" << 0.0 \  
+    << " p=" << childedge->GetP() \
+    << " q=" << child->GetQ() \
+    << std::endl;
+    }
+    std::cout << "info string end-dump" << std::endl;
+  }
+
+  UpdateNetwork();
+}
+
 void EngineController::Go(const GoParams& params) {
   auto start_time = std::chrono::steady_clock::now();
   go_params_ = params;
@@ -414,9 +471,21 @@ void EngineLoop::CmdPosition(const std::string& position,
   engine_.SetPosition(fen, moves);
 }
 
+<<<<<<< HEAD
 void EngineLoop::CmdGo(const GoParams& params) { engine_.Go(params); }
 
 void EngineLoop::CmdPonderHit() { engine_.PonderHit(); }
+=======
+void EngineLoop::CmdDumpNode(const std::vector<std::string>& moves) {
+  EnsureOptionsSent();
+  engine_.DumpNode(moves);
+}
+
+void EngineLoop::CmdGo(const GoParams& params) {
+  EnsureOptionsSent();
+  engine_.Go(params);
+}
+>>>>>>> fcd4fd6... Implement dumpnode (attempt 1, untested)
 
 void EngineLoop::CmdStop() { engine_.Stop(); }
 
