@@ -347,8 +347,6 @@ void EngineController::DumpNode(const std::vector<std::string>& moves_str) {
     }
     std::cout << "info string end-dump" << std::endl;
   }
-
-  UpdateNetwork();
 }
 
 void EngineController::Go(const GoParams& params) {
@@ -471,21 +469,14 @@ void EngineLoop::CmdPosition(const std::string& position,
   engine_.SetPosition(fen, moves);
 }
 
-<<<<<<< HEAD
 void EngineLoop::CmdGo(const GoParams& params) { engine_.Go(params); }
 
 void EngineLoop::CmdPonderHit() { engine_.PonderHit(); }
-=======
+
 void EngineLoop::CmdDumpNode(const std::vector<std::string>& moves) {
-  EnsureOptionsSent();
   engine_.DumpNode(moves);
 }
 
-void EngineLoop::CmdGo(const GoParams& params) {
-  EnsureOptionsSent();
-  engine_.Go(params);
-}
->>>>>>> fcd4fd6... Implement dumpnode (attempt 1, untested)
 
 void EngineLoop::CmdStop() { engine_.Stop(); }
 
